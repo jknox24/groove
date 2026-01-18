@@ -65,22 +65,22 @@ export function HabitCheckIn({ habit, entry, onCheckIn }: HabitCheckInProps) {
     });
   }
 
-  // Boolean tracking - simple checkbox
+  // Boolean tracking - simple checkbox (BIGGER for easy tapping)
   if (habit.tracking_type === "boolean") {
     return (
       <button
         onClick={handleBooleanToggle}
         disabled={isPending}
         className={cn(
-          "w-10 h-10 rounded-lg border-2 flex items-center justify-center transition-all",
-          "active:scale-95",
+          "w-14 h-14 rounded-xl border-2 flex items-center justify-center transition-all",
+          "active:scale-90 hover:scale-105",
           isCompleted
-            ? "bg-primary border-primary text-white"
-            : "border-border hover:border-primary/50",
+            ? "bg-primary border-primary text-white shadow-lg shadow-primary/25"
+            : "border-border hover:border-primary hover:bg-primary/5",
           isPending && "opacity-50"
         )}
       >
-        {isCompleted && <Check className="w-5 h-5" />}
+        {isCompleted && <Check className="w-7 h-7" strokeWidth={3} />}
       </button>
     );
   }

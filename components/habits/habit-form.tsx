@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,7 +12,6 @@ import {
   TRACKING_TYPES,
   FREQUENCY_OPTIONS,
   DAYS_OF_WEEK,
-  VERIFICATION_TYPES,
 } from "@/lib/constants";
 import type { Habit } from "@/types";
 
@@ -20,23 +20,25 @@ interface HabitFormProps {
   onSubmit: (formData: FormData) => Promise<{ error?: string }>;
 }
 
-const ICONS = ["💪", "📚", "🏃", "💧", "🧘", "✍️", "🎯", "💤", "🥗", "🎨"];
+const ICONS = ["💪", "📚", "🏃", "💧", "🧘", "✍️", "🎯", "💤", "🥗", "🎨", "🎸", "🧠", "❤️", "🌱", "⭐"];
 
 export function HabitForm({ habit, onSubmit }: HabitFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showAdvanced, setShowAdvanced] = useState(false);
+
+  // Smart defaults
+  const randomIcon = ICONS[Math.floor(Math.random() * ICONS.length)];
+  const randomColor = HABIT_COLORS[Math.floor(Math.random() * HABIT_COLORS.length)].value;
 
   const [trackingType, setTrackingType] = useState(habit?.tracking_type ?? "boolean");
   const [frequency, setFrequency] = useState(habit?.frequency ?? "daily");
   const [selectedDays, setSelectedDays] = useState<number[]>(
     habit?.frequency_days ?? [1, 2, 3, 4, 5]
   );
-  const [selectedColor, setSelectedColor] = useState(
-    habit?.color ?? HABIT_COLORS[0].value
-  );
-  const [selectedIcon, setSelectedIcon] = useState(habit?.icon ?? "💪");
-  const [verificationType, setVerificationType] = useState(habit?.verification_type ?? "self");
+  const [selectedColor, setSelectedColor] = useState(habit?.color ?? randomColor);
+  const [selectedIcon, setSelectedIcon] = useState(habit?.icon ?? randomIcon);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -49,7 +51,7 @@ export function HabitForm({ habit, onSubmit }: HabitFormProps) {
     formData.set("tracking_type", trackingType);
     formData.set("frequency", frequency);
     formData.set("frequency_days", JSON.stringify(selectedDays));
-    formData.set("verification_type", verificationType);
+    formData.set("verification_type", "self");
 
     const result = await onSubmit(formData);
 
@@ -69,189 +71,180 @@ export function HabitForm({ habit, onSubmit }: HabitFormProps) {
     <form onSubmit={handleSubmit}>
       <Card>
         <CardContent className="pt-6 space-y-6">
-          {/* Name */}
+          {/* Name - THE MAIN THING */}
           <div className="space-y-2">
-            <Label htmlFor="name">Habit Name</Label>
+            <Label htmlFor="name" className="text-base">What habit do you want to build?</Label>
             <Input
               id="name"
               name="name"
-              placeholder="e.g., Drink 8 glasses of water"
+              placeholder="e.g., Drink water, Read, Exercise"
               defaultValue={habit?.name}
               required
+              autoFocus
+              className="text-lg py-6"
             />
           </div>
 
-          {/* Description */}
-          <div className="space-y-2">
-            <Label htmlFor="description">Description (optional)</Label>
-            <Input
-              id="description"
-              name="description"
-              placeholder="Why is this habit important to you?"
-              defaultValue={habit?.description ?? ""}
-            />
-          </div>
-
-          {/* Icon */}
-          <div className="space-y-2">
-            <Label>Icon</Label>
-            <div className="flex flex-wrap gap-2">
-              {ICONS.map((icon) => (
-                <button
-                  key={icon}
-                  type="button"
-                  onClick={() => setSelectedIcon(icon)}
-                  className={`w-10 h-10 text-xl rounded-md border transition-colors ${
-                    selectedIcon === icon
-                      ? "border-primary bg-primary/5"
-                      : "border-border hover:border-primary/50"
-                  }`}
-                >
-                  {icon}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Color */}
-          <div className="space-y-2">
-            <Label>Color</Label>
-            <div className="flex flex-wrap gap-2">
-              {HABIT_COLORS.map((color) => (
-                <button
-                  key={color.value}
-                  type="button"
-                  onClick={() => setSelectedColor(color.value)}
-                  className={`w-8 h-8 rounded-full border-2 transition-all ${
-                    selectedColor === color.value
-                      ? "border-text scale-110"
-                      : "border-transparent"
-                  }`}
-                  style={{ backgroundColor: color.value }}
-                  title={color.name}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* Tracking Type */}
-          <div className="space-y-2">
-            <Label>How do you want to track this?</Label>
-            <div className="grid grid-cols-2 gap-2">
-              {TRACKING_TYPES.map((type) => (
-                <button
-                  key={type.value}
-                  type="button"
-                  onClick={() => setTrackingType(type.value)}
-                  className={`p-3 text-left rounded-lg border transition-colors ${
-                    trackingType === type.value
-                      ? "border-primary bg-primary/5"
-                      : "border-border hover:border-primary/50"
-                  }`}
-                >
-                  <div className="font-medium text-sm">{type.label}</div>
-                  <div className="text-xs text-text-muted">{type.description}</div>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Target Value (for quantity/duration/scale) */}
-          {trackingType !== "boolean" && (
-            <div className="flex gap-4">
-              <div className="flex-1 space-y-2">
-                <Label htmlFor="target_value">Target</Label>
-                <Input
-                  id="target_value"
-                  name="target_value"
-                  type="number"
-                  min="1"
-                  placeholder={trackingType === "scale" ? "10" : "30"}
-                  defaultValue={habit?.target_value?.toString() ?? ""}
-                />
-              </div>
-              {trackingType !== "scale" && (
-                <div className="flex-1 space-y-2">
-                  <Label htmlFor="target_unit">Unit</Label>
-                  <Input
-                    id="target_unit"
-                    name="target_unit"
-                    placeholder={trackingType === "duration" ? "minutes" : "glasses"}
-                    defaultValue={habit?.target_unit ?? ""}
-                  />
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Frequency */}
-          <div className="space-y-2">
-            <Label>How often?</Label>
-            <div className="flex flex-wrap gap-2">
-              {FREQUENCY_OPTIONS.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => setFrequency(option.value)}
-                  className={`px-4 py-2 text-sm rounded-md border transition-colors ${
-                    frequency === option.value
-                      ? "border-primary bg-primary/5 text-primary"
-                      : "border-border hover:border-primary/50"
-                  }`}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Specific Days */}
-          {frequency === "specific_days" && (
-            <div className="space-y-2">
-              <Label>Which days?</Label>
-              <div className="flex gap-2">
-                {DAYS_OF_WEEK.map((day) => (
+          {/* Quick Icon & Color Picker */}
+          <div className="flex items-center gap-4">
+            <div className="space-y-1">
+              <Label className="text-xs text-text-muted">Icon</Label>
+              <div className="flex gap-1">
+                {ICONS.slice(0, 8).map((icon) => (
                   <button
-                    key={day.value}
+                    key={icon}
                     type="button"
-                    onClick={() => toggleDay(day.value)}
-                    className={`w-10 h-10 text-sm font-medium rounded-md border transition-colors ${
-                      selectedDays.includes(day.value)
-                        ? "border-primary bg-primary text-white"
+                    onClick={() => setSelectedIcon(icon)}
+                    className={`w-9 h-9 text-lg rounded-md border transition-all ${
+                      selectedIcon === icon
+                        ? "border-primary bg-primary/10 scale-110"
                         : "border-border hover:border-primary/50"
                     }`}
                   >
-                    {day.label}
+                    {icon}
                   </button>
                 ))}
               </div>
             </div>
-          )}
-
-          {/* Verification Type */}
-          <div className="space-y-2">
-            <Label>How do you want to verify completion?</Label>
-            <div className="grid grid-cols-2 gap-2">
-              {VERIFICATION_TYPES.map((type) => (
-                <button
-                  key={type.value}
-                  type="button"
-                  onClick={() => !type.disabled && setVerificationType(type.value)}
-                  disabled={type.disabled}
-                  className={`p-3 text-left rounded-lg border transition-colors ${
-                    type.disabled
-                      ? "opacity-50 cursor-not-allowed border-border"
-                      : verificationType === type.value
-                      ? "border-primary bg-primary/5"
-                      : "border-border hover:border-primary/50"
-                  }`}
-                >
-                  <div className="font-medium text-sm">{type.label}</div>
-                  <div className="text-xs text-text-muted">{type.description}</div>
-                </button>
-              ))}
+            <div className="space-y-1">
+              <Label className="text-xs text-text-muted">Color</Label>
+              <div className="flex gap-1">
+                {HABIT_COLORS.slice(0, 6).map((color) => (
+                  <button
+                    key={color.value}
+                    type="button"
+                    onClick={() => setSelectedColor(color.value)}
+                    className={`w-7 h-7 rounded-full border-2 transition-all ${
+                      selectedColor === color.value
+                        ? "border-text scale-110"
+                        : "border-transparent hover:scale-105"
+                    }`}
+                    style={{ backgroundColor: color.value }}
+                  />
+                ))}
+              </div>
             </div>
           </div>
+
+          {/* Advanced Options Toggle */}
+          <button
+            type="button"
+            onClick={() => setShowAdvanced(!showAdvanced)}
+            className="flex items-center gap-2 text-sm text-text-muted hover:text-text transition-colors"
+          >
+            {showAdvanced ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            {showAdvanced ? "Hide options" : "More options"}
+          </button>
+
+          {/* Advanced Options */}
+          {showAdvanced && (
+            <div className="space-y-6 pt-2 border-t border-border">
+              {/* Description */}
+              <div className="space-y-2">
+                <Label htmlFor="description">Description (optional)</Label>
+                <Input
+                  id="description"
+                  name="description"
+                  placeholder="Why is this habit important?"
+                  defaultValue={habit?.description ?? ""}
+                />
+              </div>
+
+              {/* Tracking Type */}
+              <div className="space-y-2">
+                <Label>Tracking style</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {TRACKING_TYPES.map((type) => (
+                    <button
+                      key={type.value}
+                      type="button"
+                      onClick={() => setTrackingType(type.value)}
+                      className={`p-3 text-left rounded-lg border transition-colors ${
+                        trackingType === type.value
+                          ? "border-primary bg-primary/5"
+                          : "border-border hover:border-primary/50"
+                      }`}
+                    >
+                      <div className="font-medium text-sm">{type.label}</div>
+                      <div className="text-xs text-text-muted">{type.description}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Target Value */}
+              {trackingType !== "boolean" && (
+                <div className="flex gap-4">
+                  <div className="flex-1 space-y-2">
+                    <Label htmlFor="target_value">Target</Label>
+                    <Input
+                      id="target_value"
+                      name="target_value"
+                      type="number"
+                      min="1"
+                      placeholder={trackingType === "scale" ? "5" : "30"}
+                      defaultValue={habit?.target_value?.toString() ?? ""}
+                    />
+                  </div>
+                  {trackingType !== "scale" && (
+                    <div className="flex-1 space-y-2">
+                      <Label htmlFor="target_unit">Unit</Label>
+                      <Input
+                        id="target_unit"
+                        name="target_unit"
+                        placeholder={trackingType === "duration" ? "min" : "times"}
+                        defaultValue={habit?.target_unit ?? ""}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Frequency */}
+              <div className="space-y-2">
+                <Label>Frequency</Label>
+                <div className="flex flex-wrap gap-2">
+                  {FREQUENCY_OPTIONS.map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => setFrequency(option.value)}
+                      className={`px-4 py-2 text-sm rounded-md border transition-colors ${
+                        frequency === option.value
+                          ? "border-primary bg-primary/5 text-primary"
+                          : "border-border hover:border-primary/50"
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Specific Days */}
+              {frequency === "specific_days" && (
+                <div className="space-y-2">
+                  <Label>Which days?</Label>
+                  <div className="flex gap-2">
+                    {DAYS_OF_WEEK.map((day) => (
+                      <button
+                        key={day.value}
+                        type="button"
+                        onClick={() => toggleDay(day.value)}
+                        className={`w-10 h-10 text-sm font-medium rounded-md border transition-colors ${
+                          selectedDays.includes(day.value)
+                            ? "border-primary bg-primary text-white"
+                            : "border-border hover:border-primary/50"
+                        }`}
+                      >
+                        {day.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {error && (
             <div className="text-sm text-error border-l-2 border-error pl-3 py-1">
@@ -271,8 +264,8 @@ export function HabitForm({ habit, onSubmit }: HabitFormProps) {
         >
           Cancel
         </Button>
-        <Button type="submit" disabled={loading} className="flex-1">
-          {loading ? "Saving..." : habit ? "Update Habit" : "Create Habit"}
+        <Button type="submit" disabled={loading} className="flex-1 py-6 text-base">
+          {loading ? "Saving..." : habit ? "Save" : "Create Habit"}
         </Button>
       </div>
     </form>
