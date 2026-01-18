@@ -56,7 +56,7 @@ export default async function InvitePage({ params }: InvitePageProps) {
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardContent className="pt-6 text-center">
-            <p className="text-text-secondary mb-4">You can't partner with yourself!</p>
+            <p className="text-text-secondary mb-4">You can&apos;t partner with yourself!</p>
             <Link href="/partners">
               <Button>Go to Partners</Button>
             </Link>
@@ -128,7 +128,7 @@ export default async function InvitePage({ params }: InvitePageProps) {
             <span className="font-medium text-text">{inviterName}</span> wants to be your accountability partner on Groove.
           </p>
           <p className="text-sm text-text-muted">
-            As partners, you can share habits, verify each other's progress, and send encouraging nudges.
+            As partners, you can share habits, verify each other&apos;s progress, and send encouraging nudges.
           </p>
           <div className="flex gap-3 pt-4">
             <Link href="/partners" className="flex-1">

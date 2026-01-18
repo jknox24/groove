@@ -108,7 +108,7 @@ export function InviteDialog({ open, onClose }: InviteDialogProps) {
                 </div>
                 <p className="text-xs text-text-muted">
                   Share this link with your partner. When they click it and sign
-                  in, you'll be connected.
+                  in, you&apos;ll be connected.
                 </p>
               </div>
             )}

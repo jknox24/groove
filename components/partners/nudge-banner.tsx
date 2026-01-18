@@ -49,7 +49,7 @@ export function NudgeBanner({ nudges: initialNudges }: NudgeBannerProps) {
           </p>
           {latestNudge.message && (
             <p className="text-sm text-text-secondary mt-1">
-              "{latestNudge.message}"
+              &quot;{latestNudge.message}&quot;
             </p>
           )}
           <p className="text-xs text-text-muted mt-1">

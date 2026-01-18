@@ -155,7 +155,7 @@ export default async function PartnerDetailPage({ params }: PartnerDetailPagePro
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <Eye className="w-4 h-4" />
-              {partnerName}'s Habits
+              {partnerName}&apos;s Habits
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -196,7 +196,7 @@ export default async function PartnerDetailPage({ params }: PartnerDetailPagePro
             </div>
           ) : (
             <p className="text-sm text-text-muted">
-              You don't have any habits yet.{" "}
+              You don&apos;t have any habits yet.{" "}
               <Link href="/habits/new" className="text-primary hover:underline">
                 Create one
               </Link>
