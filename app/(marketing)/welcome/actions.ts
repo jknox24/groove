@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { sendWelcomeEmail } from "@/lib/email/resend";
 
 export async function joinWaitlist(formData: FormData) {
   const email = formData.get("email") as string;
@@ -19,6 +20,13 @@ export async function joinWaitlist(formData: FormData) {
       return { error: "You're already on the waitlist!" };
     }
     return { error: "Something went wrong. Please try again." };
+  }
+
+  // Send welcome email (don't block on failure)
+  try {
+    await sendWelcomeEmail(email);
+  } catch (e) {
+    console.error("Failed to send welcome email:", e);
   }
 
   return { success: true };
