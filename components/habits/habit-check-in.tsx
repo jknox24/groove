@@ -2,8 +2,17 @@
 
 import { useState, useTransition } from "react";
 import { Check, Minus, Plus } from "lucide-react";
+import confetti from "canvas-confetti";
 import { cn } from "@/lib/utils";
 import type { Habit, HabitEntry } from "@/types";
+
+function triggerConfetti() {
+  confetti({
+    particleCount: 100,
+    spread: 70,
+    origin: { y: 0.6 },
+  });
+}
 
 interface HabitCheckInProps {
   habit: Habit;
@@ -26,8 +35,10 @@ export function HabitCheckIn({ habit, entry, onCheckIn }: HabitCheckInProps) {
   const targetValue = habit.target_value ? Number(habit.target_value) : null;
 
   function handleBooleanToggle() {
+    const willComplete = !isCompleted;
     startTransition(async () => {
-      await onCheckIn(habit.id, !isCompleted);
+      await onCheckIn(habit.id, willComplete);
+      if (willComplete) triggerConfetti();
     });
   }
 
@@ -36,17 +47,21 @@ export function HabitCheckIn({ habit, entry, onCheckIn }: HabitCheckInProps) {
     setLocalValue(newValue);
 
     startTransition(async () => {
+      const wasCompleted = targetValue ? localValue >= targetValue : localValue > 0;
       const completed = targetValue ? newValue >= targetValue : newValue > 0;
       await onCheckIn(habit.id, completed, newValue);
+      if (completed && !wasCompleted) triggerConfetti();
     });
   }
 
   function handleScaleSelect(value: number) {
+    const wasCompleted = localValue > 0;
     setLocalValue(value);
     setShowInput(false);
 
     startTransition(async () => {
       await onCheckIn(habit.id, true, value);
+      if (!wasCompleted) triggerConfetti();
     });
   }
 
