@@ -56,9 +56,9 @@ export const DAYS_OF_WEEK = [
 
 // Verification types
 export const VERIFICATION_TYPES = [
-  { value: "self", label: "Self-reported", description: "Mark complete on your own" },
-  { value: "photo", label: "Photo proof", description: "Take a photo as evidence" },
-  { value: "partner", label: "Partner verification", description: "A partner confirms completion" },
+  { value: "self", label: "Self-reported", description: "Mark complete on your own", disabled: false },
+  { value: "photo", label: "Photo proof", description: "Take a photo as evidence", disabled: false },
+  { value: "partner", label: "Partner verification", description: "A partner confirms completion", disabled: false },
   { value: "data_linked", label: "Connected app", description: "Coming soon", disabled: true },
 ] as const;
 
