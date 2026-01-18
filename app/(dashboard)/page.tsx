@@ -68,12 +68,15 @@ export default async function DashboardPage() {
   });
 
   // Type the nudges properly
-  const typedNudges = (nudges ?? []).map(n => ({
-    id: n.id,
-    message: n.message,
-    created_at: n.created_at,
-    from_user: n.from_user as { id: string; display_name: string | null; username: string | null },
-  }));
+  const typedNudges = (nudges ?? []).map(n => {
+    const fromUser = Array.isArray(n.from_user) ? n.from_user[0] : n.from_user;
+    return {
+      id: n.id,
+      message: n.message,
+      created_at: n.created_at,
+      from_user: fromUser as { id: string; display_name: string | null; username: string | null },
+    };
+  });
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-6">
