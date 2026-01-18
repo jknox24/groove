@@ -65,31 +65,34 @@ export default async function PartnersPage() {
   });
 
   // Transform data for client
+  type PartnerProfile = {
+    id: string;
+    display_name: string | null;
+    username: string | null;
+    avatar_url: string | null;
+  };
+
   const partnerships = [
-    ...(outgoing?.map(p => ({
-      id: p.id,
-      partner: p.partner as {
-        id: string;
-        display_name: string | null;
-        username: string | null;
-        avatar_url: string | null;
-      },
-      status: p.status as "pending" | "active",
-      isIncoming: false,
-      sharedHabitsCount: shareCountMap.get(p.id) ?? 0,
-    })) ?? []),
-    ...(incoming?.map(p => ({
-      id: p.id,
-      partner: p.requester as {
-        id: string;
-        display_name: string | null;
-        username: string | null;
-        avatar_url: string | null;
-      },
-      status: p.status as "pending" | "active",
-      isIncoming: true,
-      sharedHabitsCount: shareCountMap.get(p.id) ?? 0,
-    })) ?? []),
+    ...(outgoing?.map(p => {
+      const partner = Array.isArray(p.partner) ? p.partner[0] : p.partner;
+      return {
+        id: p.id,
+        partner: partner as PartnerProfile,
+        status: p.status as "pending" | "active",
+        isIncoming: false,
+        sharedHabitsCount: shareCountMap.get(p.id) ?? 0,
+      };
+    }) ?? []),
+    ...(incoming?.map(p => {
+      const requester = Array.isArray(p.requester) ? p.requester[0] : p.requester;
+      return {
+        id: p.id,
+        partner: requester as PartnerProfile,
+        status: p.status as "pending" | "active",
+        isIncoming: true,
+        sharedHabitsCount: shareCountMap.get(p.id) ?? 0,
+      };
+    }) ?? []),
   ];
 
   // Separate pending incoming (requests to respond to) from others
