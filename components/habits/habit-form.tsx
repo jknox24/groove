@@ -149,6 +149,70 @@ export function HabitForm({ habit, availableHabits = [], onSubmit }: HabitFormPr
             {showAdvanced ? "Hide options" : "More options"}
           </button>
 
+          {/* Habit Stacking - Always visible */}
+          {availableHabits.length > 0 && (
+            <div className="space-y-3 p-4 rounded-xl bg-primary/5 border border-primary/20">
+              <div>
+                <Label className="text-primary">Stack with another habit</Label>
+                <p className="text-xs text-text-muted mt-1">
+                  Link this habit to build a chain (e.g., "After morning coffee, meditate")
+                </p>
+              </div>
+
+              {/* Cue Type Selection */}
+              <div className="flex gap-2">
+                {CUE_TYPES.map((type) => (
+                  <button
+                    key={type.value}
+                    type="button"
+                    onClick={() => setCueType(type.value)}
+                    className={`flex-1 px-3 py-2 text-sm font-medium rounded-lg border transition-colors ${
+                      cueType === type.value
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border hover:border-primary/50"
+                    }`}
+                  >
+                    {type.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Habit Selection */}
+              <select
+                value={cueHabitId ?? ""}
+                onChange={(e) => setCueHabitId(e.target.value || null)}
+                className="w-full px-3 py-2 rounded-lg border border-border bg-surface text-text focus:border-primary focus:outline-none"
+              >
+                <option value="">No habit (standalone)</option>
+                {availableHabits
+                  .filter((h) => h.id !== habit?.id)
+                  .map((h) => (
+                    <option key={h.id} value={h.id}>
+                      {h.icon} {h.name}
+                    </option>
+                  ))}
+              </select>
+
+              {cueHabitId && (
+                <p className="text-xs text-primary">
+                  {cueType === "after" && "→ This habit will appear after the selected habit"}
+                  {cueType === "before" && "→ This habit will appear before the selected habit"}
+                  {cueType === "with" && "→ This habit will appear together with the selected habit"}
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Advanced Options Toggle */}
+          <button
+            type="button"
+            onClick={() => setShowAdvanced(!showAdvanced)}
+            className="flex items-center gap-2 text-sm text-text-muted hover:text-text transition-colors"
+          >
+            {showAdvanced ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            {showAdvanced ? "Hide options" : "More options"}
+          </button>
+
           {/* Advanced Options */}
           {showAdvanced && (
             <div className="space-y-6 pt-2 border-t border-border">
@@ -254,58 +318,6 @@ export function HabitForm({ habit, availableHabits = [], onSubmit }: HabitFormPr
                       </button>
                     ))}
                   </div>
-                </div>
-              )}
-
-              {/* Habit Stacking */}
-              {availableHabits.length > 0 && (
-                <div className="space-y-3">
-                  <Label>Stack with another habit</Label>
-                  <p className="text-xs text-text-muted">
-                    Link this habit to another one to build a chain
-                  </p>
-
-                  {/* Cue Type Selection */}
-                  <div className="flex gap-2">
-                    {CUE_TYPES.map((type) => (
-                      <button
-                        key={type.value}
-                        type="button"
-                        onClick={() => setCueType(type.value)}
-                        className={`flex-1 px-3 py-2 text-sm font-medium rounded-lg border transition-colors ${
-                          cueType === type.value
-                            ? "border-primary bg-primary/10 text-primary"
-                            : "border-border hover:border-primary/50"
-                        }`}
-                      >
-                        {type.label}
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* Habit Selection */}
-                  <select
-                    value={cueHabitId ?? ""}
-                    onChange={(e) => setCueHabitId(e.target.value || null)}
-                    className="w-full px-3 py-2 rounded-lg border border-border bg-surface text-text focus:border-primary focus:outline-none"
-                  >
-                    <option value="">No habit (standalone)</option>
-                    {availableHabits
-                      .filter((h) => h.id !== habit?.id)
-                      .map((h) => (
-                        <option key={h.id} value={h.id}>
-                          {h.icon} {h.name}
-                        </option>
-                      ))}
-                  </select>
-
-                  {cueHabitId && (
-                    <p className="text-xs text-primary">
-                      {cueType === "after" && "This habit will appear after completing the selected habit"}
-                      {cueType === "before" && "This habit will appear before the selected habit"}
-                      {cueType === "with" && "This habit will appear together with the selected habit"}
-                    </p>
-                  )}
                 </div>
               )}
             </div>
