@@ -2,10 +2,11 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { logout } from "@/app/(auth)/actions";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Preferences } from "@/components/settings/preferences";
 import { NotificationSettings } from "@/components/settings/notification-settings";
-import { Trophy, ChevronRight } from "lucide-react";
+import { SeedDemoButton } from "@/components/settings/seed-demo-button";
+import { Trophy, ChevronRight, FlaskConical } from "lucide-react";
 
 export default async function SettingsPage() {
   const supabase = await createClient();
@@ -80,6 +81,22 @@ export default async function SettingsPage() {
                 Sign out
               </Button>
             </form>
+          </CardContent>
+        </Card>
+
+        {/* Demo Data Card */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <FlaskConical className="w-5 h-5 text-violet-500" />
+              <CardTitle>Demo Data</CardTitle>
+            </div>
+            <CardDescription>
+              Add fake data to test partner features like activity feed, comparison, and cheering.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <SeedDemoButton />
           </CardContent>
         </Card>
       </div>

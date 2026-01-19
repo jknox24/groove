@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { UserPlus, Users } from "lucide-react";
+import Link from "next/link";
+import { UserPlus, Users, Share2, ChevronRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PartnerCard } from "@/components/partners/partner-card";
 import { InviteDialog } from "@/components/partners/invite-dialog";
@@ -67,6 +68,31 @@ export function PartnersClient({
             ))}
           </div>
         </div>
+      )}
+
+      {/* Share Progress Card - Show when there are active partners */}
+      {activePartners.length > 0 && (
+        <Link href="/partners/share">
+          <div className="mb-6 p-4 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-2xl text-white hover:from-emerald-600 hover:to-teal-700 transition-all cursor-pointer group">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
+                  <Share2 className="w-6 h-6" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <p className="font-semibold text-lg">Share Progress</p>
+                    <Sparkles className="w-4 h-4 text-yellow-300" />
+                  </div>
+                  <p className="text-white/80 text-sm">
+                    Send your weekly progress to partners
+                  </p>
+                </div>
+              </div>
+              <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </div>
+          </div>
+        </Link>
       )}
 
       {/* Active Partners */}

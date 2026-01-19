@@ -426,3 +426,51 @@ export async function markAllNudgesAsRead() {
 
   revalidatePath("/");
 }
+
+export async function sendCheer(partnerId: string, habitName: string, emoji: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error("Not authenticated");
+  }
+
+  // Get user's name for the message
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("display_name")
+    .eq("id", user.id)
+    .single();
+
+  const userName = profile?.display_name || "Your partner";
+
+  // Find the partnership
+  const { data: partnership } = await supabase
+    .from("partnerships")
+    .select("id")
+    .or(`and(requester_id.eq.${user.id},partner_id.eq.${partnerId}),and(requester_id.eq.${partnerId},partner_id.eq.${user.id})`)
+    .eq("status", "active")
+    .single();
+
+  if (!partnership) {
+    throw new Error("Partnership not found");
+  }
+
+  // Create a celebration nudge
+  const message = `${emoji} ${userName} cheered your ${habitName} completion!`;
+
+  const { error } = await supabase.from("nudges").insert({
+    from_user_id: user.id,
+    to_user_id: partnerId,
+    partnership_id: partnership.id,
+    message,
+  });
+
+  if (error) {
+    console.error("Error sending cheer:", error);
+    throw new Error(error.message);
+  }
+
+  revalidatePath("/partners");
+  revalidatePath("/");
+}
