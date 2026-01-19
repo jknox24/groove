@@ -24,6 +24,7 @@ export async function createHabit(formData: FormData) {
   const verificationType = formData.get("verification_type") as string;
   const cueHabitId = formData.get("cue_habit_id") as string;
   const cueType = formData.get("cue_type") as string;
+  const timeOfDay = formData.get("time_of_day") as string;
 
   const { error } = await supabase.from("habits").insert({
     user_id: user.id,
@@ -39,6 +40,7 @@ export async function createHabit(formData: FormData) {
     verification_type: verificationType || "self",
     cue_habit_id: cueHabitId || null,
     cue_type: cueType || null,
+    time_of_day: timeOfDay || "anytime",
   });
 
   if (error) {
@@ -71,6 +73,7 @@ export async function updateHabit(habitId: string, formData: FormData) {
   const verificationType = formData.get("verification_type") as string;
   const cueHabitId = formData.get("cue_habit_id") as string;
   const cueType = formData.get("cue_type") as string;
+  const timeOfDay = formData.get("time_of_day") as string;
 
   const { error } = await supabase
     .from("habits")
@@ -87,6 +90,7 @@ export async function updateHabit(habitId: string, formData: FormData) {
       verification_type: verificationType || "self",
       cue_habit_id: cueHabitId || null,
       cue_type: cueType || null,
+      time_of_day: timeOfDay || "anytime",
     })
     .eq("id", habitId)
     .eq("user_id", user.id);

@@ -1,13 +1,15 @@
 "use client";
 
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import { Flame, CornerDownRight } from "lucide-react";
 import { HabitCheckIn } from "./habit-check-in";
 import { MiniCalendar } from "./mini-calendar";
 import { PhotoUpload } from "./photo-upload";
+import { HabitFilter, getCurrentTimeOfDay } from "./habit-filter";
 import { checkInHabit, updateEntryPhoto } from "@/app/(dashboard)/actions";
 import { cn } from "@/lib/utils";
-import type { Habit, HabitEntry } from "@/types";
+import type { Habit, HabitEntry, TimeOfDay } from "@/types";
 
 interface DailyHabitListProps {
   habits: Habit[];
@@ -61,6 +63,8 @@ function organizeHabits(habits: Habit[]): { habit: Habit; isStacked: boolean; cu
   return result;
 }
 
+type StatusFilter = "all" | "unmet" | "met";
+
 export function DailyHabitList({
   habits,
   entries,
@@ -68,7 +72,46 @@ export function DailyHabitList({
   streaks = {},
   date,
 }: DailyHabitListProps) {
-  const entriesMap = new Map(entries.map((e) => [e.habit_id, e]));
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [timeFilter, setTimeFilter] = useState<TimeOfDay | "all" | "now">("all");
+
+  const entriesMap = useMemo(
+    () => new Map(entries.map((e) => [e.habit_id, e])),
+    [entries]
+  );
+
+  // Filter habits based on selected filters
+  const filteredHabits = useMemo(() => {
+    return habits.filter((habit) => {
+      // Status filter
+      if (statusFilter !== "all") {
+        const entry = entriesMap.get(habit.id);
+        const isCompleted = entry?.completed ?? false;
+        if (statusFilter === "met" && !isCompleted) return false;
+        if (statusFilter === "unmet" && isCompleted) return false;
+      }
+
+      // Time filter
+      if (timeFilter !== "all") {
+        const habitTime = habit.time_of_day || "anytime";
+        if (timeFilter === "now") {
+          const currentTime = getCurrentTimeOfDay();
+          // Show habits for current time + anytime habits
+          if (habitTime !== currentTime && habitTime !== "anytime") return false;
+        } else if (timeFilter !== "anytime") {
+          // Show habits for selected time + anytime habits
+          if (habitTime !== timeFilter && habitTime !== "anytime") return false;
+        }
+      }
+
+      return true;
+    });
+  }, [habits, statusFilter, timeFilter, entriesMap]);
+
+  const handleFilterChange = (status: StatusFilter, time: TimeOfDay | "all" | "now") => {
+    setStatusFilter(status);
+    setTimeFilter(time);
+  };
 
   // Group all entries by habit for mini calendar
   const entriesByHabit = new Map<string, HabitEntry[]>();
@@ -77,8 +120,8 @@ export function DailyHabitList({
     entriesByHabit.set(entry.habit_id, [...existing, entry]);
   });
 
-  // Organize habits for stacking display
-  const organizedHabits = organizeHabits(habits);
+  // Organize habits for stacking display (using filtered habits)
+  const organizedHabits = organizeHabits(filteredHabits);
 
   async function handleCheckIn(
     habitId: string,
@@ -128,14 +171,27 @@ export function DailyHabitList({
     );
   }
 
-  // Calculate stats
+  // Calculate stats (always based on all habits, not filtered)
   const completedCount = habits.filter((h) => {
+    const entry = entriesMap.get(h.id);
+    return entry?.completed;
+  }).length;
+
+  // Stats for filtered view
+  const filteredCompletedCount = filteredHabits.filter((h) => {
     const entry = entriesMap.get(h.id);
     return entry?.completed;
   }).length;
 
   return (
     <div>
+      {/* Filter */}
+      {habits.length > 0 && (
+        <div className="mb-4">
+          <HabitFilter onFilterChange={handleFilterChange} />
+        </div>
+      )}
+
       {/* Summary */}
       <div className="flex items-center justify-between mb-4">
         <p className="text-gray-500 text-sm">
@@ -143,6 +199,11 @@ export function DailyHabitList({
             <span className="text-green-600 font-medium">
               All done! Great job!
             </span>
+          ) : statusFilter !== "all" || timeFilter !== "all" ? (
+            <>
+              Showing {filteredHabits.length} of {habits.length} habits
+              {filteredCompletedCount > 0 && ` (${filteredCompletedCount} done)`}
+            </>
           ) : (
             <>
               {completedCount} of {habits.length} completed
@@ -150,6 +211,19 @@ export function DailyHabitList({
           )}
         </p>
       </div>
+
+      {/* Empty filter state */}
+      {filteredHabits.length === 0 && habits.length > 0 && (
+        <div className="text-center py-8 text-gray-500">
+          <p>No habits match your filters</p>
+          <button
+            onClick={() => handleFilterChange("all", "all")}
+            className="text-primary text-sm mt-2 hover:underline"
+          >
+            Clear filters
+          </button>
+        </div>
+      )}
 
       {/* Habit List */}
       <div className="space-y-3">

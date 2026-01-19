@@ -43,6 +43,14 @@ export const FREQUENCY_OPTIONS = [
   { value: "specific_days", label: "Specific days" },
 ] as const;
 
+// Time of day options
+export const TIME_OF_DAY_OPTIONS = [
+  { value: "anytime", label: "Anytime", icon: "⏰" },
+  { value: "morning", label: "Morning", icon: "🌅" },
+  { value: "afternoon", label: "Afternoon", icon: "☀️" },
+  { value: "evening", label: "Evening", icon: "🌙" },
+] as const;
+
 // Days of the week
 export const DAYS_OF_WEEK = [
   { value: 1, label: "Mon", fullLabel: "Monday" },

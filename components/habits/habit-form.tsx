@@ -12,8 +12,9 @@ import {
   TRACKING_TYPES,
   FREQUENCY_OPTIONS,
   DAYS_OF_WEEK,
+  TIME_OF_DAY_OPTIONS,
 } from "@/lib/constants";
-import type { Habit, CueType } from "@/types";
+import type { Habit, CueType, TimeOfDay } from "@/types";
 
 interface HabitFormProps {
   habit?: Habit;
@@ -50,6 +51,7 @@ export function HabitForm({ habit, availableHabits = [], onSubmit }: HabitFormPr
   const [selectedIcon, setSelectedIcon] = useState(habit?.icon ?? randomIcon);
   const [cueHabitId, setCueHabitId] = useState<string | null>(habit?.cue_habit_id ?? null);
   const [cueType, setCueType] = useState<CueType>(habit?.cue_type ?? "after");
+  const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>(habit?.time_of_day ?? "anytime");
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -65,6 +67,7 @@ export function HabitForm({ habit, availableHabits = [], onSubmit }: HabitFormPr
     formData.set("verification_type", "self");
     formData.set("cue_habit_id", cueHabitId ?? "");
     formData.set("cue_type", cueHabitId ? cueType : "");
+    formData.set("time_of_day", timeOfDay);
 
     const result = await onSubmit(formData);
 
@@ -139,15 +142,27 @@ export function HabitForm({ habit, availableHabits = [], onSubmit }: HabitFormPr
             </div>
           </div>
 
-          {/* Advanced Options Toggle */}
-          <button
-            type="button"
-            onClick={() => setShowAdvanced(!showAdvanced)}
-            className="flex items-center gap-2 text-sm text-text-muted hover:text-text transition-colors"
-          >
-            {showAdvanced ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-            {showAdvanced ? "Hide options" : "More options"}
-          </button>
+          {/* Time of Day */}
+          <div className="space-y-2">
+            <Label className="text-xs text-text-muted">When do you do this?</Label>
+            <div className="flex flex-wrap gap-2">
+              {TIME_OF_DAY_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setTimeOfDay(option.value as TimeOfDay)}
+                  className={`px-3 py-2 text-sm rounded-lg border transition-colors flex items-center gap-1.5 ${
+                    timeOfDay === option.value
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border hover:border-primary/50"
+                  }`}
+                >
+                  <span>{option.icon}</span>
+                  <span>{option.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
 
           {/* Habit Stacking - Always visible */}
           {availableHabits.length > 0 && (
@@ -155,7 +170,7 @@ export function HabitForm({ habit, availableHabits = [], onSubmit }: HabitFormPr
               <div>
                 <Label className="text-primary">Stack with another habit</Label>
                 <p className="text-xs text-text-muted mt-1">
-                  Link this habit to build a chain (e.g., "After morning coffee, meditate")
+                  Link this habit to build a chain (e.g., &quot;After morning coffee, meditate&quot;)
                 </p>
               </div>
 

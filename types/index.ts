@@ -3,6 +3,7 @@ export type TrackingType = "boolean" | "quantity" | "duration" | "scale";
 export type Frequency = "daily" | "weekly" | "specific_days";
 export type VerificationType = "self" | "photo" | "partner" | "data_linked";
 export type CueType = "after" | "before" | "with";
+export type TimeOfDay = "anytime" | "morning" | "afternoon" | "evening";
 export type PartnershipStatus = "pending" | "active" | "declined" | "ended";
 export type NudgeType = "encouragement" | "reminder" | "celebration";
 export type InsightType = "weekly_summary" | "pattern" | "suggestion" | "streak_risk";
@@ -30,6 +31,7 @@ export interface Habit {
   frequency: Frequency;
   frequency_days: number[] | null;
   verification_type: VerificationType;
+  time_of_day: TimeOfDay | null;
   cue_habit_id: string | null;
   cue_type: CueType | null;
   is_archived: boolean;
