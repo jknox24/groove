@@ -15,7 +15,8 @@
       "Bash(node scripts/generate-icons.js:*)",
       "WebFetch(domain:apps.apple.com)",
       "Bash(vercel:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(git push:*)"
     ]
   }
 }

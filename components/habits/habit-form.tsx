@@ -99,7 +99,7 @@ export function HabitForm({ habit, availableHabits = [], onSubmit }: HabitFormPr
           </div>
 
           {/* Quick Icon & Color Picker */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-end gap-4">
             <div className="space-y-1">
               <Label className="text-xs text-text-muted">Icon</Label>
               <div className="flex gap-1">
@@ -121,7 +121,7 @@ export function HabitForm({ habit, availableHabits = [], onSubmit }: HabitFormPr
             </div>
             <div className="space-y-1">
               <Label className="text-xs text-text-muted">Color</Label>
-              <div className="flex gap-1">
+              <div className="flex gap-1 items-center h-9">
                 {HABIT_COLORS.slice(0, 6).map((color) => (
                   <button
                     key={color.value}
