@@ -1,4 +1,4 @@
-const CACHE_NAME = 'groove-v1';
+const CACHE_NAME = 'groove-v2';
 
 // Assets to cache immediately on install
 const PRECACHE_ASSETS = [
@@ -30,6 +30,35 @@ self.addEventListener('activate', (event) => {
     })
   );
   self.clients.claim();
+});
+
+// Handle messages from the main app
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SHOW_NOTIFICATION') {
+    const { title, options } = event.data.payload;
+    self.registration.showNotification(title, options);
+  }
+});
+
+// Handle notification clicks
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+      .then((clientList) => {
+        // Focus existing window if available
+        for (const client of clientList) {
+          if (client.url.includes(self.location.origin) && 'focus' in client) {
+            return client.focus();
+          }
+        }
+        // Open new window if no existing window
+        if (self.clients.openWindow) {
+          return self.clients.openWindow('/');
+        }
+      })
+  );
 });
 
 // Fetch event - network first, fallback to cache

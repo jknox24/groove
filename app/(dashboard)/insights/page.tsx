@@ -1,8 +1,13 @@
-import { Sparkles, TrendingUp, Target, Flame } from "lucide-react";
+import { Sparkles, TrendingUp, Target, Flame, BarChart3 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { calculateStreaks } from "@/lib/utils/streaks";
 import { generateInsights } from "@/lib/ai/insights";
+import {
+  WeeklyTrendChart,
+  DayOfWeekChart,
+  CompletionHeatmap,
+} from "@/components/insights/analytics-charts";
 import type { HabitEntry } from "@/types";
 
 export default async function InsightsPage() {
@@ -56,6 +61,72 @@ export default async function InsightsPage() {
     : 0;
   const bestOverallStreak = Math.max(...habitData.map(h => h.bestStreak), 0);
 
+  // Calculate weekly trend data (last 4 weeks)
+  const today = new Date();
+  const weeklyTrendData = [];
+  for (let w = 3; w >= 0; w--) {
+    const weekStart = new Date(today);
+    weekStart.setDate(today.getDate() - (w * 7 + 6));
+    const weekEnd = new Date(today);
+    weekEnd.setDate(today.getDate() - w * 7);
+
+    let completed = 0;
+    let total = 0;
+
+    for (let d = 0; d < 7; d++) {
+      const checkDate = new Date(weekStart);
+      checkDate.setDate(weekStart.getDate() + d);
+      const dateStr = checkDate.toISOString().split("T")[0];
+
+      (allEntries || []).forEach((entry) => {
+        if (entry.entry_date === dateStr) {
+          total++;
+          if (entry.completed) completed++;
+        }
+      });
+    }
+
+    weeklyTrendData.push({
+      week: w === 0 ? "This Week" : w === 1 ? "Last Week" : `${w}w ago`,
+      rate: total > 0 ? Math.round((completed / total) * 100) : 0,
+    });
+  }
+
+  // Calculate day-of-week performance
+  const dayStats: { [key: number]: { completed: number; total: number } } = {};
+  for (let i = 0; i < 7; i++) dayStats[i] = { completed: 0, total: 0 };
+
+  (allEntries || []).forEach((entry) => {
+    const date = new Date(entry.entry_date);
+    const dayOfWeek = date.getDay();
+    dayStats[dayOfWeek].total++;
+    if (entry.completed) dayStats[dayOfWeek].completed++;
+  });
+
+  const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const dayOfWeekData = [1, 2, 3, 4, 5, 6, 0].map((i) => ({
+    day: dayNames[i],
+    shortDay: dayNames[i],
+    rate: dayStats[i].total > 0
+      ? Math.round((dayStats[i].completed / dayStats[i].total) * 100)
+      : 0,
+  }));
+
+  // Calculate heatmap data (daily completions)
+  const heatmapData: { date: string; completed: number; total: number }[] = [];
+  const dateMap = new Map<string, { completed: number; total: number }>();
+
+  (allEntries || []).forEach((entry) => {
+    const existing = dateMap.get(entry.entry_date) || { completed: 0, total: 0 };
+    existing.total++;
+    if (entry.completed) existing.completed++;
+    dateMap.set(entry.entry_date, existing);
+  });
+
+  dateMap.forEach((value, date) => {
+    heatmapData.push({ date, ...value });
+  });
+
   // Generate AI insights
   let insights = "";
   try {
@@ -102,6 +173,21 @@ export default async function InsightsPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Analytics Charts */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <BarChart3 className="w-4 h-4 text-primary" />
+            Analytics
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-8">
+          <WeeklyTrendChart data={weeklyTrendData} />
+          <DayOfWeekChart data={dayOfWeekData} />
+          <CompletionHeatmap data={heatmapData} weeks={8} />
+        </CardContent>
+      </Card>
 
       {/* AI Insights */}
       <Card className="mb-6">
