@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Header } from "@/components/layout/header";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { EmailVerificationBanner } from "@/components/layout/email-verification-banner";
+import { ToastContainer } from "@/components/ui/toast-container";
 
 export default async function DashboardLayout({
   children,
@@ -39,6 +40,7 @@ export default async function DashboardLayout({
       <Header user={user} />
       <main className="pb-20 md:pb-6">{children}</main>
       <MobileNav />
+      <ToastContainer />
     </div>
   );
 }

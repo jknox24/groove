@@ -10,6 +10,7 @@ import {
   isStreakMilestone,
   getMilestoneMessage,
 } from "@/lib/sounds";
+import { showMilestone, showCelebration } from "@/stores/toast-store";
 import type { Habit, HabitEntry } from "@/types";
 
 function triggerConfetti() {
@@ -76,20 +77,23 @@ export function HabitCheckIn({
   const targetValue = habit.target_value ? Number(habit.target_value) : null;
   const habitColor = habit.color || "#7c3aed";
 
-  function handleCompletion(newStreak: number) {
+  function handleCompletion(newStreak: number, habitName: string) {
     playCompletionSound();
     triggerConfetti();
 
-    // Check for milestone
+    // Show basic completion toast for smaller streaks
+    if (newStreak === 3) {
+      showCelebration(`3 day streak on ${habitName}! Keep going!`, "🔥");
+    } else if (newStreak === 5) {
+      showCelebration(`5 days of ${habitName}! You're on fire!`, "💪");
+    }
+
+    // Check for milestone (7, 14, 21, 30, 50, 100)
     if (isStreakMilestone(newStreak)) {
       setTimeout(() => {
         playMilestoneSound();
         triggerMilestoneConfetti();
-        const message = getMilestoneMessage(newStreak);
-        if (message) {
-          // Could add a toast here in the future
-          console.log("🎉", message);
-        }
+        showMilestone(newStreak);
       }, 300);
     }
   }
@@ -99,7 +103,7 @@ export function HabitCheckIn({
     startTransition(async () => {
       await onCheckIn(habit.id, willComplete);
       if (willComplete) {
-        handleCompletion(streak + 1);
+        handleCompletion(streak + 1, habit.name);
       }
     });
   }
@@ -115,7 +119,7 @@ export function HabitCheckIn({
       const completed = targetValue ? newValue >= targetValue : newValue > 0;
       await onCheckIn(habit.id, completed, newValue);
       if (completed && !wasCompleted) {
-        handleCompletion(streak + 1);
+        handleCompletion(streak + 1, habit.name);
       }
     });
   }
@@ -128,7 +132,7 @@ export function HabitCheckIn({
     startTransition(async () => {
       await onCheckIn(habit.id, true, value);
       if (!wasCompleted) {
-        handleCompletion(streak + 1);
+        handleCompletion(streak + 1, habit.name);
       }
     });
   }

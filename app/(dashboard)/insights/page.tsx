@@ -1,4 +1,5 @@
-import { Sparkles, TrendingUp, Target, Flame, BarChart3 } from "lucide-react";
+import Link from "next/link";
+import { Sparkles, TrendingUp, Target, Flame, BarChart3, Calendar, ChevronRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { calculateStreaks } from "@/lib/utils/streaks";
@@ -148,6 +149,24 @@ export default async function InsightsPage() {
           AI-powered analysis of your habit journey
         </p>
       </div>
+
+      {/* Weekly Review Link */}
+      <Link href="/review">
+        <Card className="mb-6 hover:border-primary/50 transition-colors cursor-pointer">
+          <CardContent className="py-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Calendar className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <p className="font-semibold text-text">Weekly Review</p>
+                <p className="text-sm text-text-muted">See your detailed weekly progress</p>
+              </div>
+            </div>
+            <ChevronRight className="w-5 h-5 text-text-muted" />
+          </CardContent>
+        </Card>
+      </Link>
 
       {/* Stats Overview */}
       <div className="grid grid-cols-3 gap-3 mb-6">
