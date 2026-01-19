@@ -1,18 +1,21 @@
 "use client";
 
 import Link from "next/link";
+import { Flame } from "lucide-react";
 import { HabitCheckIn } from "./habit-check-in";
 import { PhotoUpload } from "./photo-upload";
 import { checkInHabit, updateEntryPhoto } from "@/app/(dashboard)/actions";
+import { formatStreak } from "@/lib/utils/streaks";
 import type { Habit, HabitEntry } from "@/types";
 
 interface DailyHabitListProps {
   habits: Habit[];
   entries: HabitEntry[];
+  streaks?: Record<string, number>;
   date: string;
 }
 
-export function DailyHabitList({ habits, entries, date }: DailyHabitListProps) {
+export function DailyHabitList({ habits, entries, streaks = {}, date }: DailyHabitListProps) {
   const entriesMap = new Map(entries.map((e) => [e.habit_id, e]));
 
   async function handleCheckIn(
@@ -88,35 +91,49 @@ export function DailyHabitList({ habits, entries, date }: DailyHabitListProps) {
       <div className="space-y-3">
         {habits.map((habit) => {
           const entry = entriesMap.get(habit.id) ?? null;
+          const streak = streaks[habit.id] || 0;
+          const streakText = formatStreak(streak);
 
           return (
             <div
               key={habit.id}
-              className="flex items-center gap-4 p-4 border border-border rounded-lg bg-surface"
+              className="flex items-center gap-4 p-4 rounded-2xl transition-all"
+              style={{
+                backgroundColor: habit.color || "#7c3aed",
+                boxShadow: `0 4px 12px ${habit.color || "#7c3aed"}40`,
+              }}
             >
               {/* Icon */}
               <Link
                 href={`/habits/${habit.id}`}
-                className="w-12 h-12 rounded-lg flex items-center justify-center text-xl shrink-0 hover:scale-105 transition-transform"
-                style={{ backgroundColor: `${habit.color}15` }}
+                className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shrink-0 hover:scale-105 transition-transform bg-white/20"
               >
                 {habit.icon}
               </Link>
 
               {/* Content */}
               <div className="flex-1 min-w-0">
-                <Link
-                  href={`/habits/${habit.id}`}
-                  className="font-medium text-text hover:text-primary transition-colors"
-                >
-                  {habit.name}
-                </Link>
-                <p className="text-sm text-text-muted">
+                <div className="flex items-center gap-2">
+                  <Link
+                    href={`/habits/${habit.id}`}
+                    className="font-semibold text-white hover:opacity-80 transition-opacity"
+                  >
+                    {habit.name}
+                  </Link>
+                  {/* Streak Badge */}
+                  {streak > 0 && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/20 text-white text-xs font-medium">
+                      <Flame className="w-3 h-3" />
+                      {streakText}
+                    </span>
+                  )}
+                </div>
+                <p className="text-sm text-white/70">
                   {habit.tracking_type === "boolean" && "Tap to complete"}
                   {habit.tracking_type === "quantity" &&
-                    `Target: ${habit.target_value} ${habit.target_unit || ""}`}
+                    `${entry?.value || 0}/${habit.target_value} ${habit.target_unit || ""}`}
                   {habit.tracking_type === "duration" &&
-                    `Target: ${habit.target_value} ${habit.target_unit || "min"}`}
+                    `${entry?.value || 0}/${habit.target_value} ${habit.target_unit || "min"}`}
                   {habit.tracking_type === "scale" &&
                     `Rate 1-${habit.target_value || 5}`}
                 </p>

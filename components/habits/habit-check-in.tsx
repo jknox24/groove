@@ -72,50 +72,45 @@ export function HabitCheckIn({ habit, entry, onCheckIn }: HabitCheckInProps) {
         onClick={handleBooleanToggle}
         disabled={isPending}
         className={cn(
-          "w-14 h-14 rounded-xl border-2 flex items-center justify-center transition-all",
+          "w-12 h-12 rounded-xl flex items-center justify-center transition-all",
           "active:scale-90 hover:scale-105",
           isCompleted
-            ? "bg-primary border-primary text-white shadow-lg shadow-primary/25"
-            : "border-border hover:border-primary hover:bg-primary/5",
+            ? "bg-white text-green-600 shadow-lg"
+            : "bg-white/20 hover:bg-white/30 text-white",
           isPending && "opacity-50"
         )}
       >
-        {isCompleted && <Check className="w-7 h-7" strokeWidth={3} />}
+        {isCompleted ? (
+          <Check className="w-6 h-6" strokeWidth={3} />
+        ) : (
+          <Plus className="w-6 h-6" strokeWidth={2} />
+        )}
       </button>
     );
   }
 
   // Quantity tracking - stepper
   if (habit.tracking_type === "quantity") {
-    const progress = targetValue ? Math.min(100, (localValue / targetValue) * 100) : 0;
-
     return (
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1">
         <button
           onClick={() => handleQuantityChange(-1)}
           disabled={isPending || localValue === 0}
-          className="w-8 h-8 rounded-md border border-border flex items-center justify-center hover:bg-background disabled:opacity-30"
+          className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center hover:bg-white/30 disabled:opacity-30 text-white"
         >
           <Minus className="w-4 h-4" />
         </button>
 
-        <div className="relative w-16 h-10 flex items-center justify-center">
-          <div
-            className="absolute inset-0 rounded-md bg-primary/10"
-            style={{ width: `${progress}%` }}
-          />
-          <span className="relative text-sm font-medium">
+        <div className="w-10 h-8 flex items-center justify-center">
+          <span className="text-sm font-semibold text-white">
             {localValue}
-            {targetValue && (
-              <span className="text-text-muted">/{targetValue}</span>
-            )}
           </span>
         </div>
 
         <button
           onClick={() => handleQuantityChange(1)}
           disabled={isPending}
-          className="w-8 h-8 rounded-md border border-border flex items-center justify-center hover:bg-background disabled:opacity-30"
+          className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center hover:bg-white/30 disabled:opacity-30 text-white"
         >
           <Plus className="w-4 h-4" />
         </button>
@@ -125,26 +120,20 @@ export function HabitCheckIn({ habit, entry, onCheckIn }: HabitCheckInProps) {
 
   // Duration tracking - minutes stepper
   if (habit.tracking_type === "duration") {
-    const progress = targetValue ? Math.min(100, (localValue / targetValue) * 100) : 0;
-
     return (
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1">
         <button
           onClick={() => handleQuantityChange(-5)}
           disabled={isPending || localValue === 0}
-          className="w-8 h-8 rounded-md border border-border flex items-center justify-center hover:bg-background disabled:opacity-30"
+          className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center hover:bg-white/30 disabled:opacity-30 text-white"
         >
           <Minus className="w-4 h-4" />
         </button>
 
-        <div className="relative w-20 h-10 flex items-center justify-center">
-          <div
-            className="absolute inset-0 rounded-md bg-primary/10"
-            style={{ width: `${progress}%` }}
-          />
-          <span className="relative text-sm font-medium">
+        <div className="w-14 h-8 flex items-center justify-center">
+          <span className="text-sm font-semibold text-white">
             {localValue}
-            <span className="text-text-muted text-xs ml-0.5">
+            <span className="text-white/70 text-xs ml-0.5">
               {habit.target_unit || "min"}
             </span>
           </span>
@@ -153,7 +142,7 @@ export function HabitCheckIn({ habit, entry, onCheckIn }: HabitCheckInProps) {
         <button
           onClick={() => handleQuantityChange(5)}
           disabled={isPending}
-          className="w-8 h-8 rounded-md border border-border flex items-center justify-center hover:bg-background disabled:opacity-30"
+          className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center hover:bg-white/30 disabled:opacity-30 text-white"
         >
           <Plus className="w-4 h-4" />
         </button>
@@ -170,7 +159,7 @@ export function HabitCheckIn({ habit, entry, onCheckIn }: HabitCheckInProps) {
       return (
         <button
           onClick={() => setShowInput(true)}
-          className="w-10 h-10 rounded-lg bg-primary text-white font-medium"
+          className="w-10 h-10 rounded-lg bg-white text-gray-800 font-semibold shadow-lg"
         >
           {localValue}
         </button>
@@ -185,10 +174,10 @@ export function HabitCheckIn({ habit, entry, onCheckIn }: HabitCheckInProps) {
             onClick={() => handleScaleSelect(value)}
             disabled={isPending}
             className={cn(
-              "w-8 h-8 rounded-md text-sm font-medium transition-colors",
+              "w-8 h-8 rounded-lg text-sm font-medium transition-colors",
               localValue === value
-                ? "bg-primary text-white"
-                : "border border-border hover:border-primary/50"
+                ? "bg-white text-gray-800 shadow-lg"
+                : "bg-white/20 text-white hover:bg-white/30"
             )}
           >
             {value}

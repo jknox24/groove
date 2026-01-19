@@ -115,3 +115,33 @@ export function calculateStreaks(entries: HabitEntry[]): StreakResult {
     totalDays: entries.length,
   };
 }
+
+/**
+ * Get the week dates for display (Mon-Sun containing today)
+ */
+export function getWeekDates(referenceDate: Date = new Date()): Date[] {
+  const dates: Date[] = [];
+  const current = new Date(referenceDate);
+
+  // Get Monday of the current week
+  const day = current.getDay();
+  const diff = day === 0 ? -6 : 1 - day; // Adjust if Sunday
+  current.setDate(current.getDate() + diff);
+  current.setHours(0, 0, 0, 0);
+
+  // Generate 7 days starting from Monday
+  for (let i = 0; i < 7; i++) {
+    dates.push(new Date(current));
+    current.setDate(current.getDate() + 1);
+  }
+
+  return dates;
+}
+
+/**
+ * Format streak text
+ */
+export function formatStreak(streak: number): string {
+  if (streak === 0) return "";
+  return streak === 1 ? "1 Day" : `${streak} Days`;
+}

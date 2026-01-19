@@ -3,7 +3,9 @@ import { Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import { DailyHabitList } from "@/components/habits/daily-habit-list";
+import { WeekStrip } from "@/components/habits/week-strip";
 import { NudgeBanner } from "@/components/partners/nudge-banner";
+import { calculateStreaks } from "@/lib/utils/streaks";
 import type { Habit, HabitEntry } from "@/types";
 
 export default async function DashboardPage() {
@@ -42,6 +44,21 @@ export default async function DashboardPage() {
     .eq("user_id", user?.id)
     .eq("entry_date", today);
 
+  // Fetch all entries for streak calculation (last 365 days)
+  const { data: allEntries } = await supabase
+    .from("habit_entries")
+    .select("*")
+    .eq("user_id", user?.id)
+    .gte("entry_date", new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]);
+
+  // Calculate streaks for each habit
+  const streakMap = new Map<string, number>();
+  habits.forEach((habit: Habit) => {
+    const habitEntries = (allEntries ?? []).filter((e: HabitEntry) => e.habit_id === habit.id);
+    const streakData = calculateStreaks(habitEntries);
+    streakMap.set(habit.id, streakData.currentStreak);
+  });
+
   // Fetch unread nudges
   const { data: nudges } = await supabase
     .from("nudges")
@@ -60,13 +77,6 @@ export default async function DashboardPage() {
     .order("created_at", { ascending: false })
     .limit(5);
 
-  // Format date for display
-  const dateString = new Date().toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-  });
-
   // Type the nudges properly
   const typedNudges = (nudges ?? []).map(n => {
     const fromUser = Array.isArray(n.from_user) ? n.from_user[0] : n.from_user;
@@ -78,16 +88,20 @@ export default async function DashboardPage() {
     };
   });
 
+  // Convert streakMap to object for client component
+  const streaks: Record<string, number> = {};
+  streakMap.forEach((value, key) => {
+    streaks[key] = value;
+  });
+
   return (
     <div className="mx-auto max-w-5xl px-4 py-6">
       {/* Nudge Banner */}
       <NudgeBanner nudges={typedNudges} />
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-text">{dateString}</h1>
-        </div>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-2xl font-bold text-text">Today</h1>
         {habits.length > 0 && (
           <Link href="/habits/new">
             <Button variant="outline" size="sm">
@@ -98,10 +112,14 @@ export default async function DashboardPage() {
         )}
       </div>
 
+      {/* Week Calendar Strip */}
+      <WeekStrip selectedDate={today} />
+
       {/* Daily Habits */}
       <DailyHabitList
         habits={habits as Habit[]}
         entries={(entries ?? []) as HabitEntry[]}
+        streaks={streaks}
         date={today}
       />
     </div>
