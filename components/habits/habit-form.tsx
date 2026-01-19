@@ -99,10 +99,10 @@ export function HabitForm({ habit, availableHabits = [], onSubmit }: HabitFormPr
           </div>
 
           {/* Quick Icon & Color Picker */}
-          <div className="flex items-end gap-4">
-            <div className="space-y-1">
+          <div className="space-y-4">
+            <div className="space-y-2">
               <Label className="text-xs text-text-muted">Icon</Label>
-              <div className="flex gap-1">
+              <div className="flex flex-wrap gap-1">
                 {ICONS.slice(0, 8).map((icon) => (
                   <button
                     key={icon}
@@ -119,15 +119,15 @@ export function HabitForm({ habit, availableHabits = [], onSubmit }: HabitFormPr
                 ))}
               </div>
             </div>
-            <div className="space-y-1">
+            <div className="space-y-2">
               <Label className="text-xs text-text-muted">Color</Label>
-              <div className="flex gap-1 items-center h-9">
+              <div className="flex flex-wrap gap-2">
                 {HABIT_COLORS.slice(0, 6).map((color) => (
                   <button
                     key={color.value}
                     type="button"
                     onClick={() => setSelectedColor(color.value)}
-                    className={`w-7 h-7 rounded-full border-2 transition-all ${
+                    className={`w-8 h-8 rounded-full border-2 transition-all ${
                       selectedColor === color.value
                         ? "border-text scale-110"
                         : "border-transparent hover:scale-105"
