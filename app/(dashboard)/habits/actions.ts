@@ -130,6 +130,51 @@ export async function deleteHabit(habitId: string): Promise<void> {
   redirect("/habits");
 }
 
+export async function toggleHabitFocus(habitId: string, isFocus: boolean) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "Not authenticated" };
+  }
+
+  const { error } = await supabase
+    .from("habits")
+    .update({ is_focus: isFocus })
+    .eq("id", habitId)
+    .eq("user_id", user.id);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath("/");
+  revalidatePath("/habits");
+}
+
+export async function reorderHabits(habitIds: string[]) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "Not authenticated" };
+  }
+
+  // Update sort_order for each habit
+  const updates = habitIds.map((id, index) =>
+    supabase
+      .from("habits")
+      .update({ sort_order: index })
+      .eq("id", id)
+      .eq("user_id", user.id)
+  );
+
+  await Promise.all(updates);
+
+  revalidatePath("/");
+  revalidatePath("/habits");
+}
+
 export async function archiveHabit(habitId: string): Promise<void> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();

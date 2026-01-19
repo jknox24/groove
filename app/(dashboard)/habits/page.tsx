@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
-import { HabitCard } from "@/components/habits/habit-card";
+import { SortableHabitList } from "@/components/habits/sortable-habit-list";
 import type { Habit } from "@/types";
 
 export default async function HabitsPage() {
@@ -30,11 +30,7 @@ export default async function HabitsPage() {
       </div>
 
       {habits && habits.length > 0 ? (
-        <div className="space-y-3">
-          {habits.map((habit: Habit) => (
-            <HabitCard key={habit.id} habit={habit} />
-          ))}
-        </div>
+        <SortableHabitList initialHabits={habits as Habit[]} />
       ) : (
         <div className="border border-border rounded-lg p-8 text-center">
           <div className="max-w-sm mx-auto">

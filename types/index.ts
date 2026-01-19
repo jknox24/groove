@@ -34,6 +34,7 @@ export interface Habit {
   time_of_day: TimeOfDay | null;
   cue_habit_id: string | null;
   cue_type: CueType | null;
+  is_focus: boolean;
   is_archived: boolean;
   sort_order: number;
   created_at: string;

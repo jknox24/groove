@@ -2,12 +2,13 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
-import { Flame, CornerDownRight } from "lucide-react";
+import { Flame, CornerDownRight, Star } from "lucide-react";
 import { HabitCheckIn } from "./habit-check-in";
 import { MiniCalendar } from "./mini-calendar";
 import { PhotoUpload } from "./photo-upload";
 import { HabitFilter, getCurrentTimeOfDay } from "./habit-filter";
 import { checkInHabit, updateEntryPhoto } from "@/app/(dashboard)/actions";
+import { toggleHabitFocus } from "@/app/(dashboard)/habits/actions";
 import { cn } from "@/lib/utils";
 import type { Habit, HabitEntry, TimeOfDay } from "@/types";
 
@@ -121,7 +122,15 @@ export function DailyHabitList({
   });
 
   // Organize habits for stacking display (using filtered habits)
-  const organizedHabits = organizeHabits(filteredHabits);
+  // Put focus habits first
+  const sortedHabits = [...filteredHabits].sort((a, b) => {
+    if (a.is_focus && !b.is_focus) return -1;
+    if (!a.is_focus && b.is_focus) return 1;
+    return 0;
+  });
+  const organizedHabits = organizeHabits(sortedHabits);
+
+  const focusHabits = filteredHabits.filter(h => h.is_focus);
 
   async function handleCheckIn(
     habitId: string,
@@ -225,23 +234,48 @@ export function DailyHabitList({
         </div>
       )}
 
+      {/* Focus Section Header */}
+      {focusHabits.length > 0 && (
+        <div className="flex items-center gap-2 mb-3">
+          <Star className="w-4 h-4 text-amber-500" fill="currentColor" />
+          <span className="text-sm font-medium text-amber-600 dark:text-amber-400">
+            Today&apos;s Focus
+          </span>
+          <div className="flex-1 h-px bg-amber-200 dark:bg-amber-800" />
+        </div>
+      )}
+
       {/* Habit List */}
       <div className="space-y-3">
-        {organizedHabits.map(({ habit, isStacked, cueHabit }) => {
+        {organizedHabits.map(({ habit, isStacked, cueHabit }, index) => {
+          const isFirstNonFocus = index === focusHabits.length && focusHabits.length > 0;
+          const showOtherHabitsHeader = isFirstNonFocus && !isStacked;
           const entry = entriesMap.get(habit.id) ?? null;
           const streak = streaks[habit.id] || 0;
           const habitEntries = entriesByHabit.get(habit.id) || [];
           const habitColor = habit.color || "#7c3aed";
 
           return (
-            <div
-              key={habit.id}
-              className={cn(
-                "relative bg-white dark:bg-gray-900 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden transition-all hover:shadow-md",
-                isStacked && "ml-6 border-l-2"
+            <div key={habit.id}>
+              {/* Other Habits Header */}
+              {showOtherHabitsHeader && (
+                <div className="flex items-center gap-2 mb-3 mt-6">
+                  <span className="text-sm font-medium text-gray-500">
+                    Other Habits
+                  </span>
+                  <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
+                </div>
               )}
-              style={isStacked ? { borderLeftColor: habitColor } : undefined}
-            >
+              <div
+                className={cn(
+                  "relative bg-white dark:bg-gray-900 rounded-2xl p-4 shadow-sm border overflow-hidden transition-all hover:shadow-md",
+                  isStacked && "ml-6 border-l-2",
+                  habit.is_focus
+                    ? "border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-900/10"
+                    : "border-gray-100 dark:border-gray-800"
+                )}
+                style={isStacked ? { borderLeftColor: habitColor } : undefined}
+              >
               {/* Color accent bar (only for non-stacked) */}
               {!isStacked && (
                 <div
@@ -289,6 +323,22 @@ export function DailyHabitList({
                         {streak}
                       </span>
                     )}
+                    {/* Focus Toggle */}
+                    <button
+                      onClick={() => toggleHabitFocus(habit.id, !habit.is_focus)}
+                      className={cn(
+                        "p-1 rounded transition-colors shrink-0",
+                        habit.is_focus
+                          ? "text-amber-500"
+                          : "text-gray-300 hover:text-amber-400"
+                      )}
+                      title={habit.is_focus ? "Remove from focus" : "Add to focus"}
+                    >
+                      <Star
+                        className="w-4 h-4"
+                        fill={habit.is_focus ? "currentColor" : "none"}
+                      />
+                    </button>
                   </div>
 
                   {/* Stacking label */}
@@ -321,6 +371,7 @@ export function DailyHabitList({
                   streak={streak}
                   onCheckIn={handleCheckIn}
                 />
+              </div>
               </div>
             </div>
           );
