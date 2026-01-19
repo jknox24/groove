@@ -36,6 +36,7 @@ export async function signup(formData: FormData) {
       data: {
         display_name: displayName,
       },
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/setup`,
     },
   });
 
@@ -54,6 +55,15 @@ export async function signup(formData: FormData) {
     if (profileError) {
       console.error("Error creating profile:", profileError);
     }
+  }
+
+  // Check if email confirmation is required (no session created)
+  if (!data.session) {
+    // Email confirmation is required - return success with message
+    return {
+      success: true,
+      message: "Check your email to confirm your account, then sign in."
+    };
   }
 
   revalidatePath("/", "layout");

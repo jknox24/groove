@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Header } from "@/components/layout/header";
 import { MobileNav } from "@/components/layout/mobile-nav";
+import { EmailVerificationBanner } from "@/components/layout/email-verification-banner";
 
 export default async function DashboardLayout({
   children,
@@ -31,6 +32,10 @@ export default async function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-background">
+      <EmailVerificationBanner
+        email={data.user.email ?? ""}
+        emailConfirmedAt={data.user.email_confirmed_at ?? null}
+      />
       <Header user={user} />
       <main className="pb-20 md:pb-6">{children}</main>
       <MobileNav />
