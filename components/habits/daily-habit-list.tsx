@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { Flame } from "lucide-react";
+import { Flame, CornerDownRight } from "lucide-react";
 import { HabitCheckIn } from "./habit-check-in";
 import { MiniCalendar } from "./mini-calendar";
 import { PhotoUpload } from "./photo-upload";
 import { checkInHabit, updateEntryPhoto } from "@/app/(dashboard)/actions";
+import { cn } from "@/lib/utils";
 import type { Habit, HabitEntry } from "@/types";
 
 interface DailyHabitListProps {
@@ -14,6 +15,50 @@ interface DailyHabitListProps {
   allEntries?: HabitEntry[]; // All entries for mini calendar
   streaks?: Record<string, number>;
   date: string;
+}
+
+// Organize habits into groups based on stacking relationships
+function organizeHabits(habits: Habit[]): { habit: Habit; isStacked: boolean; cueHabit?: Habit }[] {
+  const habitsMap = new Map(habits.map(h => [h.id, h]));
+  const result: { habit: Habit; isStacked: boolean; cueHabit?: Habit }[] = [];
+  const processed = new Set<string>();
+
+  // First, add standalone habits (not stacked after anything)
+  habits.forEach(habit => {
+    if (!habit.cue_habit_id && !processed.has(habit.id)) {
+      result.push({ habit, isStacked: false });
+      processed.add(habit.id);
+
+      // Find habits stacked after this one
+      habits
+        .filter(h => h.cue_habit_id === habit.id)
+        .forEach(stackedHabit => {
+          if (!processed.has(stackedHabit.id)) {
+            result.push({
+              habit: stackedHabit,
+              isStacked: true,
+              cueHabit: habit,
+            });
+            processed.add(stackedHabit.id);
+          }
+        });
+    }
+  });
+
+  // Add any remaining habits (orphaned stacked habits whose cue habit isn't shown today)
+  habits.forEach(habit => {
+    if (!processed.has(habit.id)) {
+      const cueHabit = habit.cue_habit_id ? habitsMap.get(habit.cue_habit_id) : undefined;
+      result.push({
+        habit,
+        isStacked: !!habit.cue_habit_id,
+        cueHabit,
+      });
+      processed.add(habit.id);
+    }
+  });
+
+  return result;
 }
 
 export function DailyHabitList({
@@ -31,6 +76,9 @@ export function DailyHabitList({
     const existing = entriesByHabit.get(entry.habit_id) || [];
     entriesByHabit.set(entry.habit_id, [...existing, entry]);
   });
+
+  // Organize habits for stacking display
+  const organizedHabits = organizeHabits(habits);
 
   async function handleCheckIn(
     habitId: string,
@@ -105,7 +153,7 @@ export function DailyHabitList({
 
       {/* Habit List */}
       <div className="space-y-3">
-        {habits.map((habit) => {
+        {organizedHabits.map(({ habit, isStacked, cueHabit }) => {
           const entry = entriesMap.get(habit.id) ?? null;
           const streak = streaks[habit.id] || 0;
           const habitEntries = entriesByHabit.get(habit.id) || [];
@@ -114,19 +162,35 @@ export function DailyHabitList({
           return (
             <div
               key={habit.id}
-              className="relative bg-white rounded-2xl p-4 shadow-sm border border-gray-100 overflow-hidden transition-all hover:shadow-md"
+              className={cn(
+                "relative bg-white dark:bg-gray-900 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden transition-all hover:shadow-md",
+                isStacked && "ml-6 border-l-2"
+              )}
+              style={isStacked ? { borderLeftColor: habitColor } : undefined}
             >
-              {/* Color accent bar */}
-              <div
-                className="absolute left-0 top-0 bottom-0 w-1"
-                style={{ backgroundColor: habitColor }}
-              />
+              {/* Color accent bar (only for non-stacked) */}
+              {!isStacked && (
+                <div
+                  className="absolute left-0 top-0 bottom-0 w-1"
+                  style={{ backgroundColor: habitColor }}
+                />
+              )}
+
+              {/* Stacking indicator */}
+              {isStacked && (
+                <div className="absolute -left-6 top-1/2 -translate-y-1/2 text-gray-400">
+                  <CornerDownRight className="w-4 h-4" />
+                </div>
+              )}
 
               <div className="flex items-center gap-4 pl-2">
                 {/* Icon */}
                 <Link
                   href={`/habits/${habit.id}`}
-                  className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shrink-0 hover:scale-105 transition-transform"
+                  className={cn(
+                    "rounded-xl flex items-center justify-center shrink-0 hover:scale-105 transition-transform",
+                    isStacked ? "w-10 h-10 text-xl" : "w-12 h-12 text-2xl"
+                  )}
                   style={{ backgroundColor: `${habitColor}15` }}
                 >
                   {habit.icon || "✨"}
@@ -137,18 +201,30 @@ export function DailyHabitList({
                   <div className="flex items-center gap-2 mb-1">
                     <Link
                       href={`/habits/${habit.id}`}
-                      className="font-semibold text-gray-900 hover:text-primary transition-colors truncate"
+                      className={cn(
+                        "font-semibold text-gray-900 dark:text-white hover:text-primary transition-colors truncate",
+                        isStacked && "text-sm"
+                      )}
                     >
                       {habit.name}
                     </Link>
                     {/* Streak Badge */}
                     {streak > 0 && (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-orange-100 text-orange-600 text-xs font-medium shrink-0">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 text-xs font-medium shrink-0">
                         <Flame className="w-3 h-3" />
                         {streak}
                       </span>
                     )}
                   </div>
+
+                  {/* Stacking label */}
+                  {isStacked && cueHabit && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                      {habit.cue_type === "after" && `after ${cueHabit.icon} ${cueHabit.name}`}
+                      {habit.cue_type === "before" && `before ${cueHabit.icon} ${cueHabit.name}`}
+                      {habit.cue_type === "with" && `with ${cueHabit.icon} ${cueHabit.name}`}
+                    </p>
+                  )}
 
                   {/* Mini calendar - last 7 days */}
                   <MiniCalendar entries={habitEntries} color={habitColor} />

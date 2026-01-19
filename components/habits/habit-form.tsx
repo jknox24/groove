@@ -13,20 +13,29 @@ import {
   FREQUENCY_OPTIONS,
   DAYS_OF_WEEK,
 } from "@/lib/constants";
-import type { Habit } from "@/types";
+import type { Habit, CueType } from "@/types";
 
 interface HabitFormProps {
   habit?: Habit;
+  availableHabits?: Habit[];
   onSubmit: (formData: FormData) => Promise<{ error?: string }>;
 }
 
 const ICONS = ["💪", "📚", "🏃", "💧", "🧘", "✍️", "🎯", "💤", "🥗", "🎨", "🎸", "🧠", "❤️", "🌱", "⭐"];
 
-export function HabitForm({ habit, onSubmit }: HabitFormProps) {
+const CUE_TYPES: { value: CueType; label: string; description: string }[] = [
+  { value: "after", label: "After", description: "Do this after completing the cue habit" },
+  { value: "before", label: "Before", description: "Do this before the cue habit" },
+  { value: "with", label: "With", description: "Do this together with the cue habit" },
+];
+
+export function HabitForm({ habit, availableHabits = [], onSubmit }: HabitFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(
+    !!(habit?.cue_habit_id) || false
+  );
 
   // Smart defaults
   const randomIcon = ICONS[Math.floor(Math.random() * ICONS.length)];
@@ -39,6 +48,8 @@ export function HabitForm({ habit, onSubmit }: HabitFormProps) {
   );
   const [selectedColor, setSelectedColor] = useState(habit?.color ?? randomColor);
   const [selectedIcon, setSelectedIcon] = useState(habit?.icon ?? randomIcon);
+  const [cueHabitId, setCueHabitId] = useState<string | null>(habit?.cue_habit_id ?? null);
+  const [cueType, setCueType] = useState<CueType>(habit?.cue_type ?? "after");
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -52,6 +63,8 @@ export function HabitForm({ habit, onSubmit }: HabitFormProps) {
     formData.set("frequency", frequency);
     formData.set("frequency_days", JSON.stringify(selectedDays));
     formData.set("verification_type", "self");
+    formData.set("cue_habit_id", cueHabitId ?? "");
+    formData.set("cue_type", cueHabitId ? cueType : "");
 
     const result = await onSubmit(formData);
 
@@ -241,6 +254,58 @@ export function HabitForm({ habit, onSubmit }: HabitFormProps) {
                       </button>
                     ))}
                   </div>
+                </div>
+              )}
+
+              {/* Habit Stacking */}
+              {availableHabits.length > 0 && (
+                <div className="space-y-3">
+                  <Label>Stack with another habit</Label>
+                  <p className="text-xs text-text-muted">
+                    Link this habit to another one to build a chain
+                  </p>
+
+                  {/* Cue Type Selection */}
+                  <div className="flex gap-2">
+                    {CUE_TYPES.map((type) => (
+                      <button
+                        key={type.value}
+                        type="button"
+                        onClick={() => setCueType(type.value)}
+                        className={`flex-1 px-3 py-2 text-sm font-medium rounded-lg border transition-colors ${
+                          cueType === type.value
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-border hover:border-primary/50"
+                        }`}
+                      >
+                        {type.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Habit Selection */}
+                  <select
+                    value={cueHabitId ?? ""}
+                    onChange={(e) => setCueHabitId(e.target.value || null)}
+                    className="w-full px-3 py-2 rounded-lg border border-border bg-surface text-text focus:border-primary focus:outline-none"
+                  >
+                    <option value="">No habit (standalone)</option>
+                    {availableHabits
+                      .filter((h) => h.id !== habit?.id)
+                      .map((h) => (
+                        <option key={h.id} value={h.id}>
+                          {h.icon} {h.name}
+                        </option>
+                      ))}
+                  </select>
+
+                  {cueHabitId && (
+                    <p className="text-xs text-primary">
+                      {cueType === "after" && "This habit will appear after completing the selected habit"}
+                      {cueType === "before" && "This habit will appear before the selected habit"}
+                      {cueType === "with" && "This habit will appear together with the selected habit"}
+                    </p>
+                  )}
                 </div>
               )}
             </div>
