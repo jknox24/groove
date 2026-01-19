@@ -80,6 +80,18 @@ export const ENERGY_SCALE = [
   { value: 5, label: "Very Energized" },
 ] as const;
 
+// Habit templates for onboarding quick start
+export const HABIT_TEMPLATES = [
+  { id: "water", name: "Drink Water", icon: "💧", color: "#3b82f6", description: "Stay hydrated throughout the day" },
+  { id: "exercise", name: "Exercise", icon: "🏃", color: "#22c55e", description: "30 minutes of movement" },
+  { id: "read", name: "Read", icon: "📚", color: "#8b5cf6", description: "Read for 20 minutes" },
+  { id: "meditate", name: "Meditate", icon: "🧘", color: "#f59e0b", description: "10 minutes of mindfulness" },
+  { id: "sleep", name: "Sleep 8 Hours", icon: "💤", color: "#6366f1", description: "Get quality rest" },
+  { id: "journal", name: "Journal", icon: "✍️", color: "#ec4899", description: "Write your thoughts" },
+  { id: "stretch", name: "Stretch", icon: "🙆", color: "#14b8a6", description: "Morning stretching routine" },
+  { id: "nosugar", name: "No Sugar", icon: "🍬", color: "#ef4444", description: "Avoid added sugars" },
+] as const;
+
 // Predefined nudge messages
 export const NUDGE_MESSAGES = {
   encouragement: [
