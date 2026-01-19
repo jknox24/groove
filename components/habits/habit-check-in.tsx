@@ -4,19 +4,55 @@ import { useState, useTransition } from "react";
 import { Check, Minus, Plus } from "lucide-react";
 import confetti from "canvas-confetti";
 import { cn } from "@/lib/utils";
+import {
+  playCompletionSound,
+  playMilestoneSound,
+  isStreakMilestone,
+  getMilestoneMessage,
+} from "@/lib/sounds";
 import type { Habit, HabitEntry } from "@/types";
 
 function triggerConfetti() {
   confetti({
-    particleCount: 100,
-    spread: 70,
-    origin: { y: 0.6 },
+    particleCount: 80,
+    spread: 60,
+    origin: { y: 0.7 },
+    colors: ["#22c55e", "#3b82f6", "#f59e0b", "#ec4899"],
   });
+}
+
+function triggerMilestoneConfetti() {
+  // Big celebration for milestones
+  const duration = 2000;
+  const end = Date.now() + duration;
+
+  const frame = () => {
+    confetti({
+      particleCount: 3,
+      angle: 60,
+      spread: 55,
+      origin: { x: 0 },
+      colors: ["#f59e0b", "#ef4444", "#ec4899"],
+    });
+    confetti({
+      particleCount: 3,
+      angle: 120,
+      spread: 55,
+      origin: { x: 1 },
+      colors: ["#f59e0b", "#ef4444", "#ec4899"],
+    });
+
+    if (Date.now() < end) {
+      requestAnimationFrame(frame);
+    }
+  };
+  frame();
 }
 
 interface HabitCheckInProps {
   habit: Habit;
   entry: HabitEntry | null;
+  streak?: number;
   onCheckIn: (
     habitId: string,
     completed: boolean,
@@ -24,7 +60,12 @@ interface HabitCheckInProps {
   ) => Promise<void>;
 }
 
-export function HabitCheckIn({ habit, entry, onCheckIn }: HabitCheckInProps) {
+export function HabitCheckIn({
+  habit,
+  entry,
+  streak = 0,
+  onCheckIn,
+}: HabitCheckInProps) {
   const [isPending, startTransition] = useTransition();
   const [localValue, setLocalValue] = useState<number>(
     entry?.value ? Number(entry.value) : 0
@@ -33,12 +74,33 @@ export function HabitCheckIn({ habit, entry, onCheckIn }: HabitCheckInProps) {
 
   const isCompleted = entry?.completed ?? false;
   const targetValue = habit.target_value ? Number(habit.target_value) : null;
+  const habitColor = habit.color || "#7c3aed";
+
+  function handleCompletion(newStreak: number) {
+    playCompletionSound();
+    triggerConfetti();
+
+    // Check for milestone
+    if (isStreakMilestone(newStreak)) {
+      setTimeout(() => {
+        playMilestoneSound();
+        triggerMilestoneConfetti();
+        const message = getMilestoneMessage(newStreak);
+        if (message) {
+          // Could add a toast here in the future
+          console.log("🎉", message);
+        }
+      }, 300);
+    }
+  }
 
   function handleBooleanToggle() {
     const willComplete = !isCompleted;
     startTransition(async () => {
       await onCheckIn(habit.id, willComplete);
-      if (willComplete) triggerConfetti();
+      if (willComplete) {
+        handleCompletion(streak + 1);
+      }
     });
   }
 
@@ -47,10 +109,14 @@ export function HabitCheckIn({ habit, entry, onCheckIn }: HabitCheckInProps) {
     setLocalValue(newValue);
 
     startTransition(async () => {
-      const wasCompleted = targetValue ? localValue >= targetValue : localValue > 0;
+      const wasCompleted = targetValue
+        ? localValue >= targetValue
+        : localValue > 0;
       const completed = targetValue ? newValue >= targetValue : newValue > 0;
       await onCheckIn(habit.id, completed, newValue);
-      if (completed && !wasCompleted) triggerConfetti();
+      if (completed && !wasCompleted) {
+        handleCompletion(streak + 1);
+      }
     });
   }
 
@@ -61,27 +127,30 @@ export function HabitCheckIn({ habit, entry, onCheckIn }: HabitCheckInProps) {
 
     startTransition(async () => {
       await onCheckIn(habit.id, true, value);
-      if (!wasCompleted) triggerConfetti();
+      if (!wasCompleted) {
+        handleCompletion(streak + 1);
+      }
     });
   }
 
-  // Boolean tracking - simple checkbox (BIGGER for easy tapping)
+  // Boolean tracking - large tap target
   if (habit.tracking_type === "boolean") {
     return (
       <button
         onClick={handleBooleanToggle}
         disabled={isPending}
         className={cn(
-          "w-12 h-12 rounded-xl flex items-center justify-center transition-all",
+          "w-14 h-14 rounded-2xl flex items-center justify-center transition-all",
           "active:scale-90 hover:scale-105",
-          isCompleted
-            ? "bg-white text-green-600 shadow-lg"
-            : "bg-white/20 hover:bg-white/30 text-white",
           isPending && "opacity-50"
         )}
+        style={{
+          backgroundColor: isCompleted ? habitColor : `${habitColor}15`,
+          color: isCompleted ? "white" : habitColor,
+        }}
       >
         {isCompleted ? (
-          <Check className="w-6 h-6" strokeWidth={3} />
+          <Check className="w-7 h-7" strokeWidth={3} />
         ) : (
           <Plus className="w-6 h-6" strokeWidth={2} />
         )}
@@ -91,26 +160,34 @@ export function HabitCheckIn({ habit, entry, onCheckIn }: HabitCheckInProps) {
 
   // Quantity tracking - stepper
   if (habit.tracking_type === "quantity") {
+    const isComplete = targetValue ? localValue >= targetValue : localValue > 0;
+
     return (
       <div className="flex items-center gap-1">
         <button
           onClick={() => handleQuantityChange(-1)}
           disabled={isPending || localValue === 0}
-          className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center hover:bg-white/30 disabled:opacity-30 text-white"
+          className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center hover:bg-gray-200 disabled:opacity-30 text-gray-600"
         >
           <Minus className="w-4 h-4" />
         </button>
 
-        <div className="w-10 h-8 flex items-center justify-center">
-          <span className="text-sm font-semibold text-white">
-            {localValue}
-          </span>
+        <div
+          className={cn(
+            "w-12 h-10 flex items-center justify-center rounded-lg font-semibold text-sm",
+            isComplete ? "text-white" : "text-gray-700"
+          )}
+          style={{
+            backgroundColor: isComplete ? habitColor : `${habitColor}15`,
+          }}
+        >
+          {localValue}
         </div>
 
         <button
           onClick={() => handleQuantityChange(1)}
           disabled={isPending}
-          className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center hover:bg-white/30 disabled:opacity-30 text-white"
+          className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center hover:bg-gray-200 disabled:opacity-30 text-gray-600"
         >
           <Plus className="w-4 h-4" />
         </button>
@@ -120,29 +197,37 @@ export function HabitCheckIn({ habit, entry, onCheckIn }: HabitCheckInProps) {
 
   // Duration tracking - minutes stepper
   if (habit.tracking_type === "duration") {
+    const isComplete = targetValue ? localValue >= targetValue : localValue > 0;
+
     return (
       <div className="flex items-center gap-1">
         <button
           onClick={() => handleQuantityChange(-5)}
           disabled={isPending || localValue === 0}
-          className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center hover:bg-white/30 disabled:opacity-30 text-white"
+          className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center hover:bg-gray-200 disabled:opacity-30 text-gray-600"
         >
           <Minus className="w-4 h-4" />
         </button>
 
-        <div className="w-14 h-8 flex items-center justify-center">
-          <span className="text-sm font-semibold text-white">
-            {localValue}
-            <span className="text-white/70 text-xs ml-0.5">
-              {habit.target_unit || "min"}
-            </span>
+        <div
+          className={cn(
+            "min-w-[3.5rem] h-10 px-2 flex items-center justify-center rounded-lg font-semibold text-sm",
+            isComplete ? "text-white" : "text-gray-700"
+          )}
+          style={{
+            backgroundColor: isComplete ? habitColor : `${habitColor}15`,
+          }}
+        >
+          {localValue}
+          <span className="text-xs ml-0.5 opacity-70">
+            {habit.target_unit || "m"}
           </span>
         </div>
 
         <button
           onClick={() => handleQuantityChange(5)}
           disabled={isPending}
-          className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center hover:bg-white/30 disabled:opacity-30 text-white"
+          className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center hover:bg-gray-200 disabled:opacity-30 text-gray-600"
         >
           <Plus className="w-4 h-4" />
         </button>
@@ -159,7 +244,8 @@ export function HabitCheckIn({ habit, entry, onCheckIn }: HabitCheckInProps) {
       return (
         <button
           onClick={() => setShowInput(true)}
-          className="w-10 h-10 rounded-lg bg-white text-gray-800 font-semibold shadow-lg"
+          className="w-12 h-12 rounded-xl font-bold text-lg text-white"
+          style={{ backgroundColor: habitColor }}
         >
           {localValue}
         </button>
@@ -174,11 +260,13 @@ export function HabitCheckIn({ habit, entry, onCheckIn }: HabitCheckInProps) {
             onClick={() => handleScaleSelect(value)}
             disabled={isPending}
             className={cn(
-              "w-8 h-8 rounded-lg text-sm font-medium transition-colors",
-              localValue === value
-                ? "bg-white text-gray-800 shadow-lg"
-                : "bg-white/20 text-white hover:bg-white/30"
+              "w-9 h-9 rounded-lg text-sm font-semibold transition-colors",
+              localValue === value ? "text-white" : "text-gray-600"
             )}
+            style={{
+              backgroundColor:
+                localValue === value ? habitColor : `${habitColor}15`,
+            }}
           >
             {value}
           </button>

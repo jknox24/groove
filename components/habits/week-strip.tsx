@@ -9,7 +9,7 @@ interface WeekStripProps {
   onDateSelect?: (date: string) => void;
 }
 
-const DAY_LABELS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
+const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 export function WeekStrip({ selectedDate, onDateSelect }: WeekStripProps) {
   const { weekDates, today } = useMemo(() => {
@@ -25,43 +25,54 @@ export function WeekStrip({ selectedDate, onDateSelect }: WeekStripProps) {
   const selected = selectedDate || today;
 
   return (
-    <div className="flex items-center justify-between px-2 py-3 bg-surface rounded-xl border border-border mb-6">
-      {weekDates.map((date, index) => {
-        const dateStr = date.toISOString().split("T")[0];
-        const dayNum = date.getDate();
-        const isToday = dateStr === today;
-        const isSelected = dateStr === selected;
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3 mb-6">
+      <div className="flex items-center justify-between">
+        {weekDates.map((date, index) => {
+          const dateStr = date.toISOString().split("T")[0];
+          const dayNum = date.getDate();
+          const isToday = dateStr === today;
+          const isSelected = dateStr === selected;
+          const isPast = date < new Date(today);
 
-        return (
-          <button
-            key={dateStr}
-            onClick={() => onDateSelect?.(dateStr)}
-            className={cn(
-              "flex flex-col items-center gap-1 py-2 px-3 rounded-xl transition-all",
-              isSelected && "bg-primary/10",
-              !isSelected && "hover:bg-background"
-            )}
-          >
-            <span className={cn(
-              "text-xs font-medium",
-              isSelected ? "text-primary" : "text-text-muted"
-            )}>
-              {DAY_LABELS[index]}
-            </span>
-            <span
+          return (
+            <button
+              key={dateStr}
+              onClick={() => onDateSelect?.(dateStr)}
+              disabled={!onDateSelect}
               className={cn(
-                "w-9 h-9 flex items-center justify-center rounded-full text-sm font-semibold transition-all",
-                isToday && isSelected && "bg-primary text-white",
-                isToday && !isSelected && "ring-2 ring-primary text-primary",
-                !isToday && isSelected && "bg-primary/20 text-primary",
-                !isToday && !isSelected && "text-text"
+                "flex flex-col items-center gap-1 py-2 px-2 sm:px-3 rounded-xl transition-all",
+                isSelected && "bg-primary/10",
+                !isSelected && onDateSelect && "hover:bg-gray-50"
               )}
             >
-              {dayNum}
-            </span>
-          </button>
-        );
-      })}
+              <span
+                className={cn(
+                  "text-[10px] sm:text-xs font-medium uppercase tracking-wide",
+                  isSelected
+                    ? "text-primary"
+                    : isPast
+                    ? "text-gray-400"
+                    : "text-gray-500"
+                )}
+              >
+                {DAY_LABELS[index]}
+              </span>
+              <span
+                className={cn(
+                  "w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full text-sm font-semibold transition-all",
+                  isToday && isSelected && "bg-primary text-white shadow-md",
+                  isToday && !isSelected && "ring-2 ring-primary text-primary",
+                  !isToday && isSelected && "bg-primary/20 text-primary",
+                  !isToday && !isSelected && isPast && "text-gray-400",
+                  !isToday && !isSelected && !isPast && "text-gray-700"
+                )}
+              >
+                {dayNum}
+              </span>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

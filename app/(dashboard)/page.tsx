@@ -119,6 +119,7 @@ export default async function DashboardPage() {
       <DailyHabitList
         habits={habits as Habit[]}
         entries={(entries ?? []) as HabitEntry[]}
+        allEntries={(allEntries ?? []) as HabitEntry[]}
         streaks={streaks}
         date={today}
       />
